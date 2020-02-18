@@ -67,8 +67,8 @@ void initData() {
     mutationRate = 0.09;// 变异概率，实际为(1-Pc)*0.9=0.09
     T = 3000;// 进化代数
     bestFitness = 0;// 所有代数中最好的染色体的适应度
-    bestGhArr = new int[clientNum];// 所有代数中最好的染色体
-    timeGhArr = new double[clientNum];// 所有代数中最好的染色体
+    bestGhArr = new int[clientNum+K];// 所有代数中最好的染色体
+    timeGhArr = new double[clientNum+K];// 所有代数中最好的染色体
     decodedArr = new int[clientNum];// 染色体解码后表达的每辆车的服务的客户的顺序
     weightArr = new double[clientNum + 1];// 客户需求量
     fitnessArr = new double[populationScale];// 种群适应度，表示种群中各个个体的适应度
@@ -284,7 +284,7 @@ void initGroup() {
         }
         //染色体前半端(载物顺序,即0-clientNum-1)初始化
         
-        for (i = clientNum; i < clientNum + k; i++)
+        for (i = clientNum; i < clientNum + K; i++)
             oldMatrix[k][i] = rand() % 2 + 1;//随机使用1或2号车
         //染色体后半端(车辆顺序,即clientNum-clientNum + k)初始化
     }
@@ -419,9 +419,37 @@ void oxCrossover(int k1, int k2) {
         }
     }
 
-    for (int i = 0; i < clientNum; i++)
+
+
+    ran1 = (rand() % K)+clientNum;
+    ran2 = (rand() % K)+clientNum;
+    while (ran1 == ran2)
+        ran2 = (rand() % K) + clientNum;
+
+    if (ran1 > ran2)// 确保ran1<ran2
+    {
+        temp = ran1;
+        ran1 = ran2;
+        ran2 = temp;
+    }
+    for (i = clientNum; i < ran1; i++) {
+        Gh1[i] = newMatrix[k1][i];
+        Gh2[i] = newMatrix[k2][i];
+    }
+    for (i = ran1; i < ran2 + 1; i++) {
+        Gh1[i] = newMatrix[k2][i];
+        Gh2[i] = newMatrix[k1][i];
+    }
+    for (i = ran2 + 1; i < clientNum + K; i++) {
+        Gh1[i] = newMatrix[k1][i];
+        Gh2[i] = newMatrix[k2][i];
+    }
+
+
+
+    for (int i = 0; i < clientNum +K; i++)
         newMatrix[k1][i + 0] = Gh1[i + 0];
-    for (int i = 0; i < clientNum; i++)
+    for (int i = 0; i < clientNum +K; i++)
         newMatrix[k2][i + 0] = Gh2[i + 0];
     //System.arraycopy(Gh1, 0, newMatrix[k1], 0, clientNum);
     //System.arraycopy(Gh2, 0, newMatrix[k2], 0, clientNum);
@@ -429,13 +457,16 @@ void oxCrossover(int k1, int k2) {
 
 // 对种群中的第k个染色体进行变异
 void mutation(int k) {
-    int ran1, ran2;
+    int ran1, ran2, ran3;
     ran1 = (rand() % (clientNum));
     ran2 = (rand() % (clientNum));
     while (ran1 == ran2)
-        ran2 = (rand() % (clientNum + 1));
-    swap(oldMatrix[k][ran1], oldMatrix[k][ran2]);
+        ran2 = (rand() % (clientNum));
+    swap(newMatrix[k][ran1], newMatrix[k][ran2]);
     //swap(newMatrix[k], ran1, ran2);
+
+    ran3 = (rand() % K) + clientNum;
+    oldMatrix[k][ran3] = 3 - oldMatrix[k][ran3];
 
 }
 
@@ -489,11 +520,11 @@ BestResult* solveVrp() {
     // 初始化种群
     initGroup();
 
-    int* tempGA = new int[clientNum];
+    int* tempGA = new int[clientNum+K];
 
     // 计算初始化种群适应度，Fitness[max]
     for (k = 0; k < populationScale; k++) {
-        for (i = 0; i < clientNum; i++) {
+        for (i = 0; i < clientNum+K; i++) {
             tempGA[i] = oldMatrix[k][i];
         }
         fitnessArr[k] = caculateFitness(tempGA);
@@ -507,13 +538,13 @@ BestResult* solveVrp() {
 
         // 将新种群newMatrix复制到旧种群oldMatrix中，准备下一代进化
         for (k = 0; k < populationScale; k++) 
-            for (int i = 0; i < clientNum; i++)
+            for (int i = 0; i < clientNum + K; i++)
                 oldMatrix[k][i + 0] = newMatrix[k][i + 0];
             //System.arraycopy(newMatrix[k], 0, oldMatrix[k], 0, clientNum);
 
         // 计算种群适应度，Fitness[max]
         for (k = 0; k < populationScale; k++) {
-            for (int i = 0; i < clientNum; i++)
+            for (int i = 0; i < clientNum+K; i++)
                 tempGA[i + 0] = oldMatrix[k][i + 0];
             //System.arraycopy(oldMatrix[k], 0, tempGA, 0, clientNum);
             fitnessArr[k] = caculateFitness(tempGA);
