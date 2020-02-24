@@ -81,44 +81,8 @@ void initData() {
     vehicleInfoMatrix[1][1] = 20.0;
     vehicleInfoMatrix[2][0] = 5.0;
     vehicleInfoMatrix[2][1] = 20.0;
-    vehicleInfoMatrix[3][0] = 2.0;
-    vehicleInfoMatrix[3][1] = 20.0;
-    vehicleInfoMatrix[4][0] = 5.0;
-    vehicleInfoMatrix[4][1] = 20.0;
-    vehicleInfoMatrix[5][0] = 2.0;
-    vehicleInfoMatrix[5][1] = 20.0;
-    vehicleInfoMatrix[6][0] = 5.0;
-    vehicleInfoMatrix[6][1] = 20.0;
-    vehicleInfoMatrix[7][0] = 2.0;
-    vehicleInfoMatrix[7][1] = 20.0;
-    vehicleInfoMatrix[8][0] = 5.0;
-    vehicleInfoMatrix[8][1] = 20.0;
-    vehicleInfoMatrix[9][0] = 2.0;
-    vehicleInfoMatrix[9][1] = 20.0;
-    vehicleInfoMatrix[10][0] = 5.0;
-    vehicleInfoMatrix[10][1] = 20.0;
-    vehicleInfoMatrix[11][0] = 2.0;
-    vehicleInfoMatrix[11][1] = 20.0;
-    vehicleInfoMatrix[12][0] = 5.0;
-    vehicleInfoMatrix[12][1] = 20.0;
-    vehicleInfoMatrix[13][0] = 2.0;
-    vehicleInfoMatrix[13][1] = 20.0;
-    vehicleInfoMatrix[14][0] = 5.0;
-    vehicleInfoMatrix[14][1] = 20.0;
-    vehicleInfoMatrix[15][0] = 2.0;
-    vehicleInfoMatrix[15][1] = 20.0;
-    vehicleInfoMatrix[16][0] = 5.0;
-    vehicleInfoMatrix[16][1] = 20.0;
-    vehicleInfoMatrix[17][0] = 2.0;
-    vehicleInfoMatrix[17][1] = 20.0;
-    vehicleInfoMatrix[18][0] = 5.0;
-    vehicleInfoMatrix[18][1] = 20.0;
-    vehicleInfoMatrix[19][0] = 2.0;
-    vehicleInfoMatrix[19][1] = 20.0;
-    vehicleInfoMatrix[20][0] = 5.0;
-    vehicleInfoMatrix[20][1] = 20.0;
-    vehicleInfoMatrix[21][0] = maxqvehicle;// 限制最大
-    vehicleInfoMatrix[21][1] = maxdvehicle;
+    vehicleInfoMatrix[3][0] = maxqvehicle;// 限制最大
+    vehicleInfoMatrix[3][1] = maxdvehicle;
 
     // 客户坐标
     X1[0] = 14.5;
@@ -208,7 +172,7 @@ double caculateFitness(int* Gh) {
     double cur_d, cur_q, evaluation;// 当前车辆行驶距离，载重量，评价值，即各车行驶总里程
     cur_d = distanceMatrix[0][Gh[0]];// Gh[0]表示第一个客户，
     cur_q = weightArr[Gh[0]];
-    i = 1;// 从1号车开始，默认第一辆车能满足第一个客户的需求
+    i = 0;// 从1号车开始，默认第一辆车能满足第一个客户的需求
     evaluation = 0;// 评价值初始为0
     flag = 0;// 表示车辆数未超额
 
@@ -216,8 +180,8 @@ double caculateFitness(int* Gh) {
         cur_q = cur_q + weightArr[Gh[j]];
         cur_d = cur_d + distanceMatrix[Gh[j]][Gh[j - 1]];
         // 如果当前客户需求大于车的最大载重，或者距离大于车行驶最大距离，调用下一辆车
-        if (cur_q > vehicleInfoMatrix[i][0]
-            || cur_d + distanceMatrix[Gh[j]][0] > vehicleInfoMatrix[i][1])// 还得加上返回配送中心距离
+        if (cur_q > vehicleInfoMatrix[Gh[i+clientNum]][0]
+            || cur_d + distanceMatrix[Gh[j]][0] > vehicleInfoMatrix[Gh[i + clientNum]][1])// 还得加上返回配送中心距离
         {
             i = 1 + i;// 使用下一辆车
             evaluation =evaluation + cur_d - distanceMatrix[Gh[j]][Gh[j - 1]] + distanceMatrix[Gh[j - 1]][0];
@@ -241,7 +205,7 @@ void decoding(int* Gh) {
     double cur_d, cur_q, evaluation;// 当前车辆行驶距离，载重量，评价值，即各车行驶总里程
     cur_d = distanceMatrix[0][Gh[0]];// Gh[0]表示第一个客户，
     cur_q = weightArr[Gh[0]];
-    i = 1;// 从1号车开始，默认第一辆车能满足第一个客户的需求
+    i = 0;// 从1号车开始，默认第一辆车能满足第一个客户的需求
     t = 1;// 先使用载重少的车
     decodedArr[i] = 1;
     evaluation = 0;
@@ -250,8 +214,8 @@ void decoding(int* Gh) {
         cur_q = cur_q + weightArr[Gh[j]];
         cur_d = cur_d + distanceMatrix[Gh[j]][Gh[j - 1]];
         // 如果当前客户需求大于车的最大载重，或者距离大于车行驶最大距离，调用下一辆车
-        if (cur_q > vehicleInfoMatrix[i][0]
-            || cur_d + distanceMatrix[Gh[j]][0]> vehicleInfoMatrix[i][1]) {
+        if (cur_q > vehicleInfoMatrix[Gh[i+clientNum]][0]
+            || cur_d + distanceMatrix[Gh[j]][0]> vehicleInfoMatrix[Gh[i + clientNum]][1]) {
             i = 1 + i;// 使用下一辆车
             decodedArr[i] = decodedArr[i - 1] + 1;//
             evaluation =
@@ -378,8 +342,8 @@ int select() {
 void oxCrossover(int k1, int k2) {
     int i, j, k, flag;
     int ran1, ran2, temp;
-    int* Gh1 = new int[clientNum];
-    int* Gh2 = new int[clientNum];
+    int* Gh1 = new int[clientNum+K];
+    int* Gh2 = new int[clientNum+K];
 
     ran1 = (rand() % (clientNum ));
     ran2 = (rand() % (clientNum ));
@@ -575,7 +539,10 @@ BestResult* solveVrp() {
     // 最好的染色体解码
     decoding(bestGhArr);
     // 使用车数
-    cout<<"使用车数：" << KK<<endl;
+    cout << "使用车数：" << KK << "(";
+    for (int i = clientNum; i < KK + clientNum; i++)
+        cout << bestGhArr[i];
+    cout << ")" << endl;
     // 解码
     cout << "车辆解码：";
     for (int i = 1; i <= KK; i++)
@@ -620,7 +587,7 @@ BestResult* solveVrp() {
         }
         templ[k] = 0;
         templ[0] = k;
-        tefa = k + "-" + tefa + "0";
+        tefa = tefa + "0";
         cout << tefa << endl;
         //System.out.println(tefa);
     }
