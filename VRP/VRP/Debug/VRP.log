@@ -1,2 +1,4 @@
 ﻿  VRP.cpp
-  VRP.vcxproj -> C:\Users\Love Qiong\Desktop\acm\遗传vrp\VRP\Debug\VRP.exe
+C:\Users\Love Qiong\Documents\GitHub\VRP\VRP\VRP\VRP.cpp(63,12): warning C4101: “j”: 未引用的局部变量
+C:\Users\Love Qiong\Documents\GitHub\VRP\VRP\VRP\VRP.cpp(63,9): warning C4101: “i”: 未引用的局部变量
+  VRP.vcxproj -> C:\Users\Love Qiong\Documents\GitHub\VRP\VRP\Debug\VRP.exe

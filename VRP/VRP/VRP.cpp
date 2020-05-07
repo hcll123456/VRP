@@ -14,12 +14,12 @@ using namespace std;
 const int Max = 101;
 const int maxqvehicle = 1024;
 const int maxdvehicle = 1024;
-const int clientNum = 20;// 客户数目,染色体长度
-const int K = 20;// 最大车数目
+const int clientNum = 9;// 客户数目,染色体长度
+const int K = 10;// 最大车数目
 int KK;// 实际使用车数
 double punishWeight;// W1, W2, W3;//惩罚权重
 double crossRate, mutationRate;// 交叉概率和变异概率
-const int populationScale=100;// 种群规模
+const int populationScale=200;// 种群规模
 int T;// 进化代数
 int t;// 当前代数
 int* bestGhArr;// 所有代数中最好的染色体
@@ -65,7 +65,7 @@ void initData() {
     punishWeight = 300;// 车辆超额惩罚权重
     crossRate = 0.9;// 交叉概率
     mutationRate = 0.09;// 变异概率，实际为(1-Pc)*0.9=0.09
-    T = 3000;// 进化代数
+    T = 8000;// 进化代数
     bestFitness = 0;// 所有代数中最好的染色体的适应度
     bestGhArr = new int[clientNum+K];// 所有代数中最好的染色体
     timeGhArr = new double[clientNum+K];// 所有代数中最好的染色体
@@ -78,12 +78,83 @@ void initData() {
 
     // 车辆最大载重和最大行驶
     vehicleInfoMatrix[1][0] = 2.0;
-    vehicleInfoMatrix[1][1] = 20.0;
+    vehicleInfoMatrix[1][1] = 40.0;
     vehicleInfoMatrix[2][0] = 5.0;
-    vehicleInfoMatrix[2][1] = 20.0;
+    vehicleInfoMatrix[2][1] = 40.0;
     vehicleInfoMatrix[3][0] = maxqvehicle;// 限制最大
     vehicleInfoMatrix[3][1] = maxdvehicle;
 
+
+    distanceMatrix[0][1] = 5;
+    distanceMatrix[0][2] = 8;
+    distanceMatrix[0][3] = 7;
+    distanceMatrix[0][4] = 40;
+    distanceMatrix[0][5] = 4;
+    distanceMatrix[0][6] = 12;
+    distanceMatrix[0][7] = 9;
+    distanceMatrix[0][8] = 12;
+    distanceMatrix[0][9] = 6;
+    distanceMatrix[1][0] = 5;
+    for (int i = 1; i < 10; i++)
+        distanceMatrix[1][i] = 40;
+    distanceMatrix[1][2] = 4;
+    distanceMatrix[1][9] = 3;
+    distanceMatrix[2][0] = 8;
+    for (int i = 1; i < 10; i++)
+        distanceMatrix[2][i] = 40;
+    distanceMatrix[2][1] = 4;
+    distanceMatrix[2][3] = 3;
+    distanceMatrix[3][0] = 7;
+    for (int i = 1; i < 10; i++)
+        distanceMatrix[3][i] = 40;
+    distanceMatrix[3][2] = 3;
+    distanceMatrix[3][4] = 4;
+    distanceMatrix[4][0] = 40;
+    for (int i = 1; i < 10; i++)
+        distanceMatrix[4][i] = 40;
+    distanceMatrix[4][3] = 4;
+    distanceMatrix[4][5] = 3;
+    distanceMatrix[5][0] = 4;
+    for (int i = 1; i < 10; i++)
+        distanceMatrix[5][i] = 40;
+    distanceMatrix[5][4] = 3;
+    distanceMatrix[5][6] = 10;
+    distanceMatrix[6][0] = 12;
+    for (int i = 1; i < 10; i++)
+        distanceMatrix[6][i] = 40;
+    distanceMatrix[6][5] = 10;
+    distanceMatrix[6][7] = 4;
+    distanceMatrix[6][8] = 7;
+    distanceMatrix[7][0] = 9;
+    for (int i = 1; i < 10; i++)
+        distanceMatrix[7][i] = 40;
+    distanceMatrix[7][6] = 4;
+    distanceMatrix[7][8] = 5;
+    distanceMatrix[8][0] = 12;
+    for (int i = 1; i < 10; i++)
+        distanceMatrix[8][i] = 40;
+    distanceMatrix[8][6] = 7;
+    distanceMatrix[8][7] = 5;
+    distanceMatrix[8][9] = 9;
+    distanceMatrix[9][0] = 6;
+    for (int i = 1; i < 10; i++)
+        distanceMatrix[9][i] = 40;
+    distanceMatrix[9][1] = 3;
+    distanceMatrix[9][8] = 9;
+
+    weightArr[0] = 0;
+    weightArr[1] = 1.7;
+    weightArr[2] = 0.8;
+    weightArr[3] = 1.3;
+    weightArr[4] = 2.8;
+    weightArr[5] = 1.9;
+    weightArr[6] = 3.5;
+    weightArr[7] = 0.9;
+    weightArr[8] = 0.3;
+    weightArr[9] = 1.2;
+
+
+    /*
     // 客户坐标
     X1[0] = 14.5;
     Y1[0] = 13.0;
@@ -161,6 +232,7 @@ void initData() {
             distanceMatrix[i][j] = sqrt(x * x + y * y);
         }
     }
+    */
 }
 
 // 染色体评价函数，输入一个染色体，得到该染色体评价值
@@ -184,7 +256,7 @@ double caculateFitness(int* Gh) {
             || cur_d + distanceMatrix[Gh[j]][0] > vehicleInfoMatrix[Gh[i + clientNum]][1])// 还得加上返回配送中心距离
         {
             i = 1 + i;// 使用下一辆车
-            evaluation =evaluation + cur_d - distanceMatrix[Gh[j]][Gh[j - 1]] + distanceMatrix[Gh[j - 1]][0];
+            evaluation =evaluation + cur_d - distanceMatrix[Gh[j]][Gh[j - 1]] + distanceMatrix[Gh[j - 1]][0] -(cur_q-weightArr[Gh[j]]);
             cur_d = distanceMatrix[0][Gh[j]];// 从配送中心到当前客户j距离
             cur_q = weightArr[Gh[j]];
         }
@@ -417,6 +489,8 @@ void oxCrossover(int k1, int k2) {
         newMatrix[k2][i + 0] = Gh2[i + 0];
     //System.arraycopy(Gh1, 0, newMatrix[k1], 0, clientNum);
     //System.arraycopy(Gh2, 0, newMatrix[k2], 0, clientNum);
+    delete[] Gh1, Gh2;
+
 }
 
 // 对种群中的第k个染色体进行变异
@@ -504,13 +578,11 @@ BestResult* solveVrp() {
         for (k = 0; k < populationScale; k++) 
             for (int i = 0; i < clientNum + K; i++)
                 oldMatrix[k][i + 0] = newMatrix[k][i + 0];
-            //System.arraycopy(newMatrix[k], 0, oldMatrix[k], 0, clientNum);
 
         // 计算种群适应度，Fitness[max]
         for (k = 0; k < populationScale; k++) {
             for (int i = 0; i < clientNum+K; i++)
                 tempGA[i + 0] = oldMatrix[k][i + 0];
-            //System.arraycopy(oldMatrix[k], 0, tempGA, 0, clientNum);
             fitnessArr[k] = caculateFitness(tempGA);
         }
 
